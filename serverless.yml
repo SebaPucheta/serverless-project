@@ -1,0 +1,112 @@
+service: lambda-project
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, 'dev'}
+  region: us-east-1
+  environment:
+    CARS_TABLE_NAME: ${file(config/config.${self:provider.stage}.json):CARS_TABLE_NAME}
+    USERS_TABLE_NAME: ${file(config/config.${self:provider.stage}.json):USERS_TABLE_NAME}
+    TOKEN_PRIVATE_KEY: ${file(config/config.${self:provider.stage}.json):TOKEN_PRIVATE_KEY}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "*"
+
+plugins:
+  - serverless-offline
+
+functions:
+  cars-get-all:
+    handler: src/application/controllers/carsController.getAll
+    events:
+    - http:
+        path: cars
+        method: get
+        cors: true
+        authorizer: authorizer
+  cars-get:
+    handler: src/application/controllers/carsController.get
+    events:
+    - http:
+        path: cars/{id}
+        method: get
+        cors: true
+        authorizer: authorizer
+  cars-put:
+    handler: src/application/controllers/carsController.put
+    events:
+    - http:
+        path: cars/{id}
+        method: put
+        cors: true
+        authorizer: authorizer
+  cars-post:
+    handler: src/application/controllers/carsController.post
+    events:
+    - http:
+        path: cars
+        method: post
+        cors: true
+        authorizer: authorizer
+  cars-delete:
+    handler: src/application/controllers/carsController.remove
+    events:
+    - http:
+        path: cars/{id}
+        method: delete
+        cors: true
+        authorizer: authorizer
+  sign-up:
+    handler: src/application/controllers/authController.signUp
+    events:
+    - http:
+        path: sign-up
+        method: post
+        cors: true
+  login:
+    handler: src/application/controllers/authController.login
+    events:
+    - http:
+        path: login
+        method: post
+        cors: true
+  authorizer:
+    handler: src/application/controllers/authController.authorization
+
+resources:
+  Resources:
+    carsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.CARS_TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    usersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.USERS_TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: email
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

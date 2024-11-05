@@ -1,0 +1,6 @@
+{
+	"CARS_TABLE_NAME": "cars",
+	"USERS_TABLE_NAME": "credentials",
+	"TOKEN_PRIVATE_KEY": "pepe",
+	"SALT_ROUNDS": 10
+}
